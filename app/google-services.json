@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "438976755284",
+    "project_id": "shopping-app-admin-d89ac",
+    "storage_bucket": "shopping-app-admin-d89ac.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:438976755284:android:bdcb1afce0ef0ca3365fc1",
+        "android_client_info": {
+          "package_name": "com.geniusapk.shoppingappadmin"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyATOL0TxJOb30ZvyiP6ueP0Quy5omipgkU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
