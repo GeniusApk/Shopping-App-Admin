@@ -12,8 +12,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.geniusapk.shoppingappadmin.presentation.Navigation.App
+import com.geniusapk.shoppingappadmin.presentation.screens.AddProductsScreen
+import com.geniusapk.shoppingappadmin.presentation.screens.CategoryScreen
 import com.geniusapk.shoppingappadmin.ui.theme.ShoppingAppAdminTheme
+import dagger.hilt.android.AndroidEntryPoint
 
+
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -21,7 +26,8 @@ class MainActivity : ComponentActivity() {
         setContent {
             ShoppingAppAdminTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    App(modifier = Modifier.padding(innerPadding))
+                   // App(modifier = Modifier.padding(innerPadding))
+                    AddProductsScreen()
                 }
             }
         }

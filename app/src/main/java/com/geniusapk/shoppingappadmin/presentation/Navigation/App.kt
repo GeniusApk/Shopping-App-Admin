@@ -19,10 +19,18 @@ val navController = rememberNavController()
             composable<Routes.Dashboard>{
 
             }
-            composable<Routes.AddProduct>{}
-            composable<Routes.Notification>{}
-            composable<Routes.Category>{}
-            composable<Routes.Order>{}
+            composable<Routes.AddProduct>{
+
+            }
+            composable<Routes.Notification>{
+
+            }
+            composable<Routes.Category>{
+
+            }
+            composable<Routes.Order>{
+
+            }
 
         }
 
