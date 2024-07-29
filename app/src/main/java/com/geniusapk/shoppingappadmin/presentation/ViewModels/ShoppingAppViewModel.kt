@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.geniusapk.shoppingappadmin.common.ResultState
 import com.geniusapk.shoppingappadmin.domain.models.CategoryModels
+import com.geniusapk.shoppingappadmin.domain.models.ProductsModels
 import com.geniusapk.shoppingappadmin.domain.repo.ShoppingAppRepo
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.collectLatest
@@ -24,6 +25,9 @@ class ShoppingAppViewModel @Inject constructor(var ShoppingAppRepo: ShoppingAppR
         mutableStateOf(GetCategoryState())
     val getCategoryState = _getCategoryState
 
+    private val _addProductState : MutableState<AddProductState> = mutableStateOf(AddProductState())
+    val addProductState : MutableState<AddProductState> = _addProductState
+
 
     fun getCategories() {
         viewModelScope.launch {
@@ -39,7 +43,7 @@ class ShoppingAppViewModel @Inject constructor(var ShoppingAppRepo: ShoppingAppR
 
                     is ResultState.Error -> {
                         _getCategoryState.value = _getCategoryState.value.copy(
-                            error = it.exception.message ?: "Unknown error",
+                            error = it.exception ?: "Unknown error",
                             isLoading = false
 
                         )
@@ -64,7 +68,7 @@ class ShoppingAppViewModel @Inject constructor(var ShoppingAppRepo: ShoppingAppR
             ShoppingAppRepo.addCategory(category.value).collectLatest {
                 when (it) {
                     is ResultState.Error -> {
-                        categoryState.value = CategoryState(error = it.exception.message.toString())
+                        categoryState.value = CategoryState(error = it.exception)
                     }
 
                     ResultState.Loading -> {
@@ -87,6 +91,27 @@ class ShoppingAppViewModel @Inject constructor(var ShoppingAppRepo: ShoppingAppR
     }
 
 
+    fun addProduct(productsModels: ProductsModels){
+        viewModelScope.launch {
+
+            ShoppingAppRepo.addProduct(productsModels = productsModels).collectLatest {
+
+                when(it){
+                    is ResultState.Error -> {
+                        _addProductState.value = AddProductState(error = it.exception)
+                    }
+                    ResultState.Loading -> {
+                        _addProductState.value = AddProductState(loading = true)
+                    }
+                    is ResultState.Success -> {
+                        _addProductState.value = AddProductState(success = it.data)
+                    }
+                }
+            }
+        }
+    }
+
+
 }
 
 
@@ -104,9 +129,8 @@ data class CategoryState(
 )
 
 
-data class AddProductsState(
-    val data: String = "",
-    val isLoading: Boolean = false,
-    val error: String = ""
-
+data class AddProductState(
+    var loading: Boolean = false,
+    var success: String = "",
+    var error: String = ""
 )
