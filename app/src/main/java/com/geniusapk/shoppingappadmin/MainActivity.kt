@@ -25,10 +25,9 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             ShoppingAppAdminTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                   // App(modifier = Modifier.padding(innerPadding))
-                    AddProductsScreen()
-                }
+                    App(modifier = Modifier)
+                 //   AddProductsScreen()
+
             }
         }
     }

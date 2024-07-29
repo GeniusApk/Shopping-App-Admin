@@ -1,6 +1,5 @@
 package com.geniusapk.shoppingappadmin.data.repo
 
-import android.util.Log
 import com.geniusapk.shoppingappadmin.common.ResultState
 import com.geniusapk.shoppingappadmin.domain.models.CategoryModels
 import com.geniusapk.shoppingappadmin.domain.models.ProductsModels
@@ -20,7 +19,7 @@ class ShoppingAppRepoImpl @Inject constructor(private val FirebaseFirestore: Fir
             FirebaseFirestore.collection("categories").add(category).addOnSuccessListener {
                 trySend(ResultState.Success("Category Added Successfully"))
             }.addOnFailureListener {
-                trySend(ResultState.Error(it))
+                trySend(ResultState.Error(it.toString()))
 
             }
             awaitClose {
@@ -41,9 +40,25 @@ class ShoppingAppRepoImpl @Inject constructor(private val FirebaseFirestore: Fir
                 trySend(ResultState.Success(categories))
             }
             .addOnFailureListener { exception ->
-                trySend(ResultState.Error(exception))
+                trySend(ResultState.Error(exception.toString()))
             }
         awaitClose { close() }
+
+    }
+
+    override suspend fun addProduct(productsModels: ProductsModels): Flow<ResultState<String>> = callbackFlow{
+
+        trySend(ResultState.Loading)
+
+        FirebaseFirestore.collection("Products").add(productsModels).addOnSuccessListener {
+            trySend(ResultState.Success("Product Successfully Added"))
+        }.addOnFailureListener {
+            trySend(ResultState.Error("Error: ${it.localizedMessage!!}"))
+        }
+
+        awaitClose {
+            close()
+        }
 
     }
 }
