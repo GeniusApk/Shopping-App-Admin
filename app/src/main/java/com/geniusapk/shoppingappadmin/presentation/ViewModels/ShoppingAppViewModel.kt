@@ -1,5 +1,6 @@
 package com.geniusapk.shoppingappadmin.presentation.ViewModels
 
+import android.net.Uri
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
@@ -27,6 +28,38 @@ class ShoppingAppViewModel @Inject constructor(var ShoppingAppRepo: ShoppingAppR
 
     private val _addProductState : MutableState<AddProductState> = mutableStateOf(AddProductState())
     val addProductState : MutableState<AddProductState> = _addProductState
+
+
+    private val _uploadCategoryImageState  = mutableStateOf(UploadCategoryImageState())
+    val uploadCategoryImageState : MutableState<UploadCategoryImageState> = _uploadCategoryImageState
+
+    fun uploadCategoryImage(imageUri : Uri){
+        viewModelScope.launch {
+            ShoppingAppRepo.uploadCategoryImage(imageUri).collectLatest {
+                when(it){
+                    is ResultState.Error -> {
+                        _uploadCategoryImageState.value = _uploadCategoryImageState.value.copy(
+                            loading = false,
+                            error = it.exception
+                        )
+                    }
+                    is ResultState.Loading -> {
+                        _uploadCategoryImageState.value = _uploadCategoryImageState.value.copy(
+                            loading = true
+                        )
+
+                    }
+                    is ResultState.Success -> {
+                        _uploadCategoryImageState.value = _uploadCategoryImageState.value.copy(
+                            loading = false,
+                            success = it.data
+                        )
+                    }
+                }
+            }
+        }
+    }
+
 
 
     fun getCategories() {
@@ -130,6 +163,12 @@ data class CategoryState(
 
 
 data class AddProductState(
+    var loading: Boolean = false,
+    var success: String = "",
+    var error: String = ""
+)
+
+data class UploadCategoryImageState(
     var loading: Boolean = false,
     var success: String = "",
     var error: String = ""
