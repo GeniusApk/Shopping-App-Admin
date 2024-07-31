@@ -1,10 +1,12 @@
 package com.geniusapk.shoppingappadmin.data.repo
 
+import android.net.Uri
 import com.geniusapk.shoppingappadmin.common.ResultState
 import com.geniusapk.shoppingappadmin.domain.models.CategoryModels
 import com.geniusapk.shoppingappadmin.domain.models.ProductsModels
 import com.geniusapk.shoppingappadmin.domain.repo.ShoppingAppRepo
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -56,6 +58,25 @@ class ShoppingAppRepoImpl @Inject constructor(private val FirebaseFirestore: Fir
             trySend(ResultState.Error("Error: ${it.localizedMessage!!}"))
         }
 
+        awaitClose {
+            close()
+        }
+
+    }
+
+    override suspend fun uploadCategoryImage(imageUri: Uri): Flow<ResultState<String>> = callbackFlow{
+        trySend(ResultState.Loading)
+
+         FirebaseStorage.getInstance().reference.child("categoryImages/${System.currentTimeMillis()}")
+             .putFile(imageUri ?: Uri.EMPTY).addOnCompleteListener {
+                 it.result.storage.downloadUrl.addOnSuccessListener { imageUrl ->
+                     trySend(ResultState.Success(imageUrl.toString()))
+                 }
+                 if (it.exception != null) {
+                     trySend(ResultState.Error(it.exception?.localizedMessage.toString()))
+                 }
+
+             }
         awaitClose {
             close()
         }
