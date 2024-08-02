@@ -38,18 +38,15 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import com.geniusapk.shoppingappadmin.domain.models.CategoryModels
 import com.geniusapk.shoppingappadmin.presentation.ViewModels.ShoppingAppViewModel
 
-@Preview(showBackground = true, showSystemUi = true)
-@Composable
-fun CategoryScreenPreview() {
-    CategoryScreen()
-}
 
 @Composable
 fun CategoryScreen(
-    viewModel: ShoppingAppViewModel = hiltViewModel()
+    viewModel: ShoppingAppViewModel = hiltViewModel(),
 ) {
     var categoryName by remember { mutableStateOf("") }
     var categoryBy by remember { mutableStateOf("") }
@@ -65,7 +62,7 @@ fun CategoryScreen(
         rememberLauncherForActivityResult(contract = ActivityResultContracts.PickVisualMedia()) { uri: Uri? ->
             if (uri != null) {
 
-               viewModel.uploadCategoryImage(uri)
+                viewModel.uploadCategoryImage(uri)
                 categoryImageUri = uri
 
                 //  productImageUri = uri
@@ -78,37 +75,39 @@ fun CategoryScreen(
 
     val uploadImageState = viewModel.uploadCategoryImageState.value
 
-    if (uploadImageState.loading) {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            CircularProgressIndicator()
-        }
-    } else if (uploadImageState.error.isNotBlank()) {
-        Toast.makeText(context, uploadImageState.error, Toast.LENGTH_SHORT).show()
-    } else if (uploadImageState.success.isNotBlank()) {
-        Toast.makeText(context, uploadImageState.success, Toast.LENGTH_SHORT).show()
-        categoryImage = uploadImageState.success
-    }
 
-
+    // when i was using separate state for uploading image and adding category then it will giving too much toast
+    // now this totaly file
 
     when {
-        state.isLoading -> {
-            CircularProgressIndicator()
-
+        state.isLoading || uploadImageState.loading -> {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator()
+            }
         }
-
         state.error.isNotBlank() -> {
             Toast.makeText(context, state.error, Toast.LENGTH_SHORT).show()
         }
-
+        uploadImageState.error.isNotBlank() -> {
+            Toast.makeText(context, uploadImageState.error, Toast.LENGTH_SHORT).show()
+        }
         state.data.isNotBlank() -> {
             Toast.makeText(context, state.data, Toast.LENGTH_SHORT).show()
+            categoryName = ""
+            categoryBy = ""
+            categoryImageUri = null
+            categoryImage = ""
+
 
         }
+        uploadImageState.success.isNotBlank() -> {
+            categoryImage = uploadImageState.success
+        }
     }
+
 
 
 
@@ -199,20 +198,33 @@ fun CategoryScreen(
 
         Button(
             onClick = {
-                viewModel.category.value.name = categoryName
-                viewModel.category.value.createBy = categoryBy
-                viewModel.category.value.categoryImage = categoryImage
-                viewModel.addCategory()
-                categoryName = ""
-                categoryBy = ""
-                categoryImageUri = null
-                categoryImage = ""
+                if (categoryName.isNotBlank() && categoryBy.isNotBlank()) {
+
+
+                    viewModel.addCategory(
+                        categories = CategoryModels(
+                            name = categoryName,
+                            createBy = categoryBy,
+                            categoryImage = categoryImage
+
+                        )
+                    )
+                    categoryName = ""
+                    categoryBy = ""
+                    categoryImageUri = null
+                    categoryImage = ""
+                } else {
+                    Toast.makeText(context, "Please Fill All Fields", Toast.LENGTH_SHORT).show()
+                }
+
+
             },
             modifier = Modifier.fillMaxWidth(),
             enabled = categoryName.isNotBlank()
         ) {
             Text("Add Category")
         }
+
 
     }
 
