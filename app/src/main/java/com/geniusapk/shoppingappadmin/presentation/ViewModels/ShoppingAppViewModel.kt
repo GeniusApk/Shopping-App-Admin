@@ -96,9 +96,9 @@ class ShoppingAppViewModel @Inject constructor(var ShoppingAppRepo: ShoppingAppR
     }
 
 
-    fun addCategory() {
+    fun addCategory( categories: CategoryModels) {
         viewModelScope.launch {
-            ShoppingAppRepo.addCategory(category.value).collectLatest {
+            ShoppingAppRepo.addCategory(categories).collectLatest {
                 when (it) {
                     is ResultState.Error -> {
                         categoryState.value = CategoryState(error = it.exception)
@@ -112,6 +112,9 @@ class ShoppingAppViewModel @Inject constructor(var ShoppingAppRepo: ShoppingAppR
                         categoryState.value = CategoryState(data = it.data)
                         category.value.name = ""
                         category.value.createBy = ""
+                        category.value.categoryImage = ""
+
+
                     }
 
 
