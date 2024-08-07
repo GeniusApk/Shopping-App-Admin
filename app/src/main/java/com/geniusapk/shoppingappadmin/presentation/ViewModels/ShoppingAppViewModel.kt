@@ -6,6 +6,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.geniusapk.shoppingappadmin.common.ResultState
+import com.geniusapk.shoppingappadmin.domain.models.BannerModels
 import com.geniusapk.shoppingappadmin.domain.models.CategoryModels
 import com.geniusapk.shoppingappadmin.domain.models.ProductsModels
 import com.geniusapk.shoppingappadmin.domain.repo.ShoppingAppRepo
@@ -32,6 +33,72 @@ class ShoppingAppViewModel @Inject constructor(var ShoppingAppRepo: ShoppingAppR
 
     private val _uploadCategoryImageState  = mutableStateOf(UploadCategoryImageState())
     val uploadCategoryImageState : MutableState<UploadCategoryImageState> = _uploadCategoryImageState
+
+
+    private val _upLoadBannerState = mutableStateOf(UploadBannerState())
+    val uploadBannerState : MutableState<UploadBannerState> = _upLoadBannerState
+
+    private val _addBannerState = mutableStateOf(AddBannerState())
+    val addBannerState : MutableState<AddBannerState> = _addBannerState
+
+
+    fun addBanner(bannerModels: BannerModels){
+        viewModelScope.launch {
+            ShoppingAppRepo.addBanner(bannerModels).collectLatest {
+                when(it){
+                    is ResultState.Error -> {
+                        _addBannerState.value = _addBannerState.value.copy(
+                            loading = false,
+                            error = it.exception
+                        )
+                    }
+                    is ResultState.Loading -> {
+                        _addBannerState.value = _addBannerState.value.copy(
+                            loading = true
+                        )
+                    }
+                    is ResultState.Success -> {
+                        _addBannerState.value = _addBannerState.value.copy(
+                            loading = false,
+                            success = it.data
+                        )
+
+                    }
+                }
+            }
+
+        }
+    }
+
+
+
+
+    fun uploadBanner(imageUri: Uri){
+        viewModelScope.launch {
+            ShoppingAppRepo.upLoadBannerImage(imageUri).collectLatest {
+                when(it){
+                    is ResultState.Error -> {
+                        _upLoadBannerState.value = _upLoadBannerState.value.copy(
+                            loading = false,
+                            error = it.exception
+                        )
+                    }
+                    is ResultState.Loading -> {
+                        _upLoadBannerState.value = _upLoadBannerState.value.copy(
+                            loading = true
+                        )
+                    }
+                    is ResultState.Success -> {
+                        _upLoadBannerState.value = _upLoadBannerState.value.copy(
+                            loading = false,
+                            success = it.data
+                        )
+                    }
+                }
+            }
+        }
+    }
+
 
     fun uploadCategoryImage(imageUri : Uri){
         viewModelScope.launch {
@@ -172,6 +239,18 @@ data class AddProductState(
 )
 
 data class UploadCategoryImageState(
+    var loading: Boolean = false,
+    var success: String = "",
+    var error: String = ""
+)
+
+data class UploadBannerState(
+    var loading: Boolean = false,
+    var success: String = "",
+    var error: String = ""
+)
+
+data class AddBannerState(
     var loading: Boolean = false,
     var success: String = "",
     var error: String = ""

@@ -11,13 +11,16 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Button
@@ -81,6 +84,7 @@ fun AddProductsScreen(
     var availableUnits by remember { mutableStateOf("") }
     var createdBy by remember { mutableStateOf("") }
     var expanded by remember { mutableStateOf(false) }
+    var finalPrice by remember { mutableStateOf("") }
 
     val launcher =
         rememberLauncherForActivityResult(contract = ActivityResultContracts.PickVisualMedia()) { uri: Uri? ->
@@ -124,7 +128,8 @@ fun AddProductsScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 16.dp),
+            .verticalScroll(rememberScrollState())
+            .padding( horizontal = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
@@ -179,7 +184,7 @@ fun AddProductsScreen(
             modifier = Modifier.align(Alignment.Start)
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
         OutlinedTextField(
             value = name,
@@ -190,21 +195,41 @@ fun AddProductsScreen(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        OutlinedTextField(
-            value = price,
-            onValueChange = { price = it },
-            label = { Text("Price") },
+
+        Row(
             modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-            keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number)
-        )
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ){
+            OutlinedTextField(
+                value = price,
+                onValueChange = { price = it },
+                label = { Text("Price") },
+                modifier = Modifier.weight(1f),
+                singleLine = true,
+                keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number)
+            )
+
+            OutlinedTextField(
+                value = finalPrice,
+                onValueChange = { finalPrice = it },
+                label = { Text("Final Price") },
+                modifier = Modifier.weight(1f),
+                singleLine = true,
+                keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number)
+            )
+
+        }
+
+
+
 
         Spacer(modifier = Modifier.height(8.dp))
 
         OutlinedTextField(
             value = description,
             onValueChange = { description = it },
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth()
+                .height(100.dp),
             label = { Text("Description") }
         )
 
@@ -274,7 +299,7 @@ fun AddProductsScreen(
             onClick = {
                 if (name.isNotBlank() && price.isNotBlank() && description.isNotBlank() &&
                     productImageUri != null && category.isNotBlank() &&
-                    availableUnits.isNotBlank() && createdBy.isNotBlank()
+                    availableUnits.isNotBlank() && createdBy.isNotBlank() && finalPrice.isNotBlank()
                 ) {
 
                     uploadImageToDatabase(productImageUri!!) { imageUrl ->
@@ -285,9 +310,22 @@ fun AddProductsScreen(
                                 price = price,
                                 availableUints = availableUnits.toInt(),
                                 description = description,
-                                image = imageUrl
+                                image = imageUrl,
+                                createBy = createdBy,
+                                finalPrice = finalPrice
+
                             )
-                        )}
+                        )
+                    }
+                    name = ""
+                    price = ""
+                    description = ""
+                    productImageUri = null
+                    category = ""
+                    availableUnits = ""
+                    createdBy = ""
+                    finalPrice = ""
+
                 } else {
                     Toast.makeText(context, "Please Fill All Fields", Toast.LENGTH_SHORT).show()
                 }

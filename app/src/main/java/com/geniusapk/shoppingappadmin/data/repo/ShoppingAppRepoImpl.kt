@@ -2,6 +2,7 @@ package com.geniusapk.shoppingappadmin.data.repo
 
 import android.net.Uri
 import com.geniusapk.shoppingappadmin.common.ResultState
+import com.geniusapk.shoppingappadmin.domain.models.BannerModels
 import com.geniusapk.shoppingappadmin.domain.models.CategoryModels
 import com.geniusapk.shoppingappadmin.domain.models.ProductsModels
 import com.geniusapk.shoppingappadmin.domain.repo.ShoppingAppRepo
@@ -12,7 +13,10 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import javax.inject.Inject
 
-class ShoppingAppRepoImpl @Inject constructor(private val FirebaseFirestore: FirebaseFirestore) :
+class ShoppingAppRepoImpl @Inject constructor(
+    private val FirebaseFirestore: FirebaseFirestore,
+    private val firebaseStorage: FirebaseStorage
+) :
     ShoppingAppRepo {
     override suspend fun addCategory(category: CategoryModels): Flow<ResultState<String>> =
         callbackFlow {
@@ -48,35 +52,69 @@ class ShoppingAppRepoImpl @Inject constructor(private val FirebaseFirestore: Fir
 
     }
 
-    override suspend fun addProduct(productsModels: ProductsModels): Flow<ResultState<String>> = callbackFlow{
+    override suspend fun addProduct(productsModels: ProductsModels): Flow<ResultState<String>> =
+        callbackFlow {
 
-        trySend(ResultState.Loading)
+            trySend(ResultState.Loading)
 
-        FirebaseFirestore.collection("Products").add(productsModels).addOnSuccessListener {
-            trySend(ResultState.Success("Product Successfully Added"))
-        }.addOnFailureListener {
-            trySend(ResultState.Error("Error: ${it.localizedMessage!!}"))
+            FirebaseFirestore.collection("Products").add(productsModels).addOnSuccessListener {
+                trySend(ResultState.Success("Product Successfully Added"))
+            }.addOnFailureListener {
+                trySend(ResultState.Error("Error: ${it.localizedMessage!!}"))
+            }
+
+            awaitClose {
+                close()
+            }
+
         }
 
+    override suspend fun uploadCategoryImage(imageUri: Uri): Flow<ResultState<String>> =
+        callbackFlow {
+            trySend(ResultState.Loading)
+
+            firebaseStorage.reference.child("categoryImages/${System.currentTimeMillis()}")
+                .putFile(imageUri ?: Uri.EMPTY).addOnCompleteListener {
+                    it.result.storage.downloadUrl.addOnSuccessListener { imageUrl ->
+                        trySend(ResultState.Success(imageUrl.toString()))
+                    }
+                    if (it.exception != null) {
+                        trySend(ResultState.Error(it.exception?.localizedMessage.toString()))
+                    }
+
+                }
+            awaitClose {
+                close()
+            }
+
+        }
+
+    override suspend fun upLoadBannerImage(imageUri: Uri): Flow<ResultState<String>> = callbackFlow {
+        trySend(ResultState.Loading)
+        firebaseStorage.reference.child("bannerImages/${System.currentTimeMillis()}").putFile(
+            imageUri ?: Uri.EMPTY
+        ).addOnCompleteListener{
+            it.result.storage.downloadUrl.addOnSuccessListener { imageUrl ->
+                trySend(ResultState.Success(imageUrl.toString()))
+            }
+            if (it.exception != null) {
+                trySend(ResultState.Error(it.exception?.localizedMessage.toString()))
+            }
+
+        }
         awaitClose {
             close()
         }
 
     }
 
-    override suspend fun uploadCategoryImage(imageUri: Uri): Flow<ResultState<String>> = callbackFlow{
+    override suspend fun addBanner(bannerModels: BannerModels): Flow<ResultState<String>> = callbackFlow{
         trySend(ResultState.Loading)
-
-         FirebaseStorage.getInstance().reference.child("categoryImages/${System.currentTimeMillis()}")
-             .putFile(imageUri ?: Uri.EMPTY).addOnCompleteListener {
-                 it.result.storage.downloadUrl.addOnSuccessListener { imageUrl ->
-                     trySend(ResultState.Success(imageUrl.toString()))
-                 }
-                 if (it.exception != null) {
-                     trySend(ResultState.Error(it.exception?.localizedMessage.toString()))
-                 }
-
-             }
+        FirebaseFirestore.collection("banner").add(bannerModels).addOnSuccessListener {
+            trySend(ResultState.Success("Banner Added Successfully"))
+        }.addOnFailureListener {
+            trySend(ResultState.Error(it.toString()))
+        }
         awaitClose {
             close()
         }
