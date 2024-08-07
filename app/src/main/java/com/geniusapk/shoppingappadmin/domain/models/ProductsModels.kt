@@ -3,6 +3,7 @@ package com.geniusapk.shoppingappadmin.domain.models
  data class ProductsModels (
      val name : String = "",
      val price : String = "",
+     val finalPrice : String = "",
      val description : String = "",
      val image : String = "",
      val category : String = "",

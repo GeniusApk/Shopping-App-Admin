@@ -32,7 +32,7 @@ import com.geniusapk.shoppingappadmin.presentation.screens.CategoryScreen
 
 @Composable
 fun App(modifier: Modifier) {
-val navController = rememberNavController()
+    val navController = rememberNavController()
 
     var selected by remember {
         mutableIntStateOf(0)
@@ -52,16 +52,18 @@ val navController = rememberNavController()
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentDestination = navBackStackEntry?.destination?.route
 
-                NavigationBar{
+                NavigationBar {
                     bottomNavItems.forEachIndexed { index, bottomNavItem ->
                         NavigationBarItem(
                             alwaysShowLabel = true,
                             selected = selected == index,
-                            onClick = {selected = index},
+                            onClick = { selected = index },
 
                             icon = {
-                                Icon(imageVector =
-                                bottomNavItem.icon , contentDescription = bottomNavItem.name)
+                                Icon(
+                                    imageVector =
+                                    bottomNavItem.icon, contentDescription = bottomNavItem.name
+                                )
                             }, label = {
                                 Text(text = bottomNavItem.name)
                             }
@@ -73,53 +75,47 @@ val navController = rememberNavController()
                 }
 
 
-
             }
-        ) {innerPadding ->
-            Box(modifier = Modifier.fillMaxSize().padding(innerPadding)){
-                when(selected){
-                    0-> Text(text = "Dashboard")
-                    1-> AddProductsScreen()
-                    2-> Text(text = "Notification")
-                    3-> CategoryScreen()
-                    4-> Text(text = "Order")
+        ) { innerPadding ->
+            Box(modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)) {
+                when (selected) {
+                    0 -> Text(text = "Dashboard")
+                    1 -> AddProductsScreen()
+                    2 -> Text(text = "Notification")
+                    3 -> CategoryScreen()
+                    4 -> Text(text = "Order")
 
                 }
             }
 
 
-    }
+        }
+        NavHost(navController = navController, startDestination = Routes.Dashboard) {
+            composable<Routes.Dashboard> {
 
+            }
+            composable<Routes.AddProduct> {
 
+            }
+            composable<Routes.Notification> {
 
+            }
+            composable<Routes.Category> {
 
+            }
+            composable<Routes.Order> {
 
+            }
 
         }
-    NavHost(navController = navController, startDestination = Routes.Dashboard){
-        composable<Routes.Dashboard>{
 
-        }
-        composable<Routes.AddProduct>{
-
-        }
-        composable<Routes.Notification>{
-
-        }
-        composable<Routes.Category>{
-
-        }
-        composable<Routes.Order>{
-
-        }
 
     }
-
 
 
 }
 
 
-
-
-data class BottomNavItem(val name : String, val icon : ImageVector, )
+data class BottomNavItem(val name: String, val icon: ImageVector)
