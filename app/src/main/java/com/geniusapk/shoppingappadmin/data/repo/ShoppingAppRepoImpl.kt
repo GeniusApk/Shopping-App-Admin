@@ -1,12 +1,15 @@
 package com.geniusapk.shoppingappadmin.data.repo
 
 import android.net.Uri
+import android.util.Log
 import com.geniusapk.shoppingappadmin.common.ResultState
 import com.geniusapk.shoppingappadmin.domain.models.BannerModels
 import com.geniusapk.shoppingappadmin.domain.models.CategoryModels
 import com.geniusapk.shoppingappadmin.domain.models.ProductsModels
 import com.geniusapk.shoppingappadmin.domain.repo.ShoppingAppRepo
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.messaging.FirebaseMessaging
+import com.google.firebase.messaging.RemoteMessage
 import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -59,6 +62,9 @@ class ShoppingAppRepoImpl @Inject constructor(
 
             FirebaseFirestore.collection("Products").add(productsModels).addOnSuccessListener {
                 trySend(ResultState.Success("Product Successfully Added"))
+                sendNotificationToAllUsers(productsModels.name)
+
+                Log.d("testtag", "addProduct: ${productsModels.name}")
             }.addOnFailureListener {
                 trySend(ResultState.Error("Error: ${it.localizedMessage!!}"))
             }
@@ -120,4 +126,30 @@ class ShoppingAppRepoImpl @Inject constructor(
         }
 
     }
+
+        //testing
+    private fun sendNotificationToAllUsers(productName: String) {
+        FirebaseFirestore.collection("user_tokens").get()
+            .addOnSuccessListener { documents ->
+                for (document in documents) {
+                    val token = document.getString("token")
+                    if (token != null) {
+                        sendNotification(token, productName)
+                    }
+                }
+            }
+    }
+
+    private fun sendNotification(token: String, productName: String) {
+        val message = RemoteMessage.Builder(token)
+            .setData(mapOf(
+                "title" to "New Product Added",
+                "body" to "Check out our new product: $productName"
+            ))
+            .build()
+
+        FirebaseMessaging.getInstance().send(message)
+    }
 }
+
+

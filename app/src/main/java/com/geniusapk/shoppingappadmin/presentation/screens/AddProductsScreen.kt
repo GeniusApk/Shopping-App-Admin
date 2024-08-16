@@ -113,6 +113,18 @@ fun AddProductsScreen(
 
         AddProductState.success.isNotBlank() -> {
             Toast.makeText(context, AddProductState.success, Toast.LENGTH_SHORT).show()
+            name = ""
+            price = ""
+            description = ""
+            productImageUri = null
+            category = ""
+            availableUnits = ""
+            createdBy = ""
+            finalPrice = ""
+
+            viewModel.resetAddProductState()
+
+
         }
 
         AddProductState.error.isNotBlank() -> {
@@ -293,6 +305,7 @@ fun AddProductsScreen(
         )
 
         Spacer(modifier = Modifier.height(16.dp))
+        val availableUnitsInt = availableUnits.toIntOrNull()
 
         Button(
             modifier = Modifier.fillMaxWidth(),
@@ -302,13 +315,14 @@ fun AddProductsScreen(
                     availableUnits.isNotBlank() && createdBy.isNotBlank() && finalPrice.isNotBlank()
                 ) {
 
+
                     uploadImageToDatabase(productImageUri!!) { imageUrl ->
                         viewModel.addProduct(
                             productsModels = ProductsModels(
                                 category = category,
                                 name = name,
                                 price = price,
-                                availableUints = availableUnits.toInt(),
+                                availableUints = availableUnitsInt!!,
                                 description = description,
                                 image = imageUrl,
                                 createBy = createdBy,
@@ -317,14 +331,6 @@ fun AddProductsScreen(
                             )
                         )
                     }
-                    name = ""
-                    price = ""
-                    description = ""
-                    productImageUri = null
-                    category = ""
-                    availableUnits = ""
-                    createdBy = ""
-                    finalPrice = ""
 
                 } else {
                     Toast.makeText(context, "Please Fill All Fields", Toast.LENGTH_SHORT).show()
