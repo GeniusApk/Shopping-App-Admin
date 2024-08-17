@@ -2,14 +2,14 @@ package com.geniusapk.shoppingappadmin.data.repo
 
 import android.net.Uri
 import android.util.Log
+import androidx.compose.ui.platform.LocalContext
 import com.geniusapk.shoppingappadmin.common.ResultState
+import com.geniusapk.shoppingappadmin.data.pushNotifiy.PushNotification
 import com.geniusapk.shoppingappadmin.domain.models.BannerModels
 import com.geniusapk.shoppingappadmin.domain.models.CategoryModels
 import com.geniusapk.shoppingappadmin.domain.models.ProductsModels
 import com.geniusapk.shoppingappadmin.domain.repo.ShoppingAppRepo
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.messaging.FirebaseMessaging
-import com.google.firebase.messaging.RemoteMessage
 import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -18,7 +18,9 @@ import javax.inject.Inject
 
 class ShoppingAppRepoImpl @Inject constructor(
     private val FirebaseFirestore: FirebaseFirestore,
-    private val firebaseStorage: FirebaseStorage
+    private val firebaseStorage: FirebaseStorage,
+    private val pushNotification: PushNotification
+
 ) :
     ShoppingAppRepo {
     override suspend fun addCategory(category: CategoryModels): Flow<ResultState<String>> =
@@ -62,7 +64,7 @@ class ShoppingAppRepoImpl @Inject constructor(
 
             FirebaseFirestore.collection("Products").add(productsModels).addOnSuccessListener {
                 trySend(ResultState.Success("Product Successfully Added"))
-                sendNotificationToAllUsers(productsModels.name)
+                pushNotification.sendNotificationToAllUsers(productsModels.name, productsModels.image)
 
                 Log.d("testtag", "addProduct: ${productsModels.name}")
             }.addOnFailureListener {
@@ -95,61 +97,43 @@ class ShoppingAppRepoImpl @Inject constructor(
 
         }
 
-    override suspend fun upLoadBannerImage(imageUri: Uri): Flow<ResultState<String>> = callbackFlow {
-        trySend(ResultState.Loading)
-        firebaseStorage.reference.child("bannerImages/${System.currentTimeMillis()}").putFile(
-            imageUri ?: Uri.EMPTY
-        ).addOnCompleteListener{
-            it.result.storage.downloadUrl.addOnSuccessListener { imageUrl ->
-                trySend(ResultState.Success(imageUrl.toString()))
-            }
-            if (it.exception != null) {
-                trySend(ResultState.Error(it.exception?.localizedMessage.toString()))
-            }
-
-        }
-        awaitClose {
-            close()
-        }
-
-    }
-
-    override suspend fun addBanner(bannerModels: BannerModels): Flow<ResultState<String>> = callbackFlow{
-        trySend(ResultState.Loading)
-        FirebaseFirestore.collection("banner").add(bannerModels).addOnSuccessListener {
-            trySend(ResultState.Success("Banner Added Successfully"))
-        }.addOnFailureListener {
-            trySend(ResultState.Error(it.toString()))
-        }
-        awaitClose {
-            close()
-        }
-
-    }
-
-        //testing
-    private fun sendNotificationToAllUsers(productName: String) {
-        FirebaseFirestore.collection("user_tokens").get()
-            .addOnSuccessListener { documents ->
-                for (document in documents) {
-                    val token = document.getString("token")
-                    if (token != null) {
-                        sendNotification(token, productName)
-                    }
+    override suspend fun upLoadBannerImage(imageUri: Uri): Flow<ResultState<String>> =
+        callbackFlow {
+            trySend(ResultState.Loading)
+            firebaseStorage.reference.child("bannerImages/${System.currentTimeMillis()}").putFile(
+                imageUri ?: Uri.EMPTY
+            ).addOnCompleteListener {
+                it.result.storage.downloadUrl.addOnSuccessListener { imageUrl ->
+                    trySend(ResultState.Success(imageUrl.toString()))
                 }
+                if (it.exception != null) {
+                    trySend(ResultState.Error(it.exception?.localizedMessage.toString()))
+                }
+
             }
-    }
+            awaitClose {
+                close()
+            }
 
-    private fun sendNotification(token: String, productName: String) {
-        val message = RemoteMessage.Builder(token)
-            .setData(mapOf(
-                "title" to "New Product Added",
-                "body" to "Check out our new product: $productName"
-            ))
-            .build()
+        }
 
-        FirebaseMessaging.getInstance().send(message)
-    }
+    override suspend fun addBanner(bannerModels: BannerModels): Flow<ResultState<String>> =
+        callbackFlow {
+            trySend(ResultState.Loading)
+            FirebaseFirestore.collection("banner").add(bannerModels).addOnSuccessListener {
+                trySend(ResultState.Success("Banner Added Successfully"))
+            }.addOnFailureListener {
+                trySend(ResultState.Error(it.toString()))
+            }
+            awaitClose {
+                close()
+            }
+
+        }
+
+
+
 }
+
 
 
