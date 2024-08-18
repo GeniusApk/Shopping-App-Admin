@@ -2,83 +2,88 @@ package com.geniusapk.shoppingappadmin.data.pushNotifiy
 
 import android.content.Context
 import android.util.Log
-import androidx.compose.ui.platform.LocalContext
 import com.geniusapk.shoppingappadmin.R
-import okhttp3.OkHttpClient
 import com.google.auth.oauth2.GoogleCredentials
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.storage.FirebaseStorage
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import okhttp3.Call
-import okhttp3.Callback
+import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
+import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
-import okhttp3.Response
 import org.json.JSONObject
 import java.io.IOException
 import javax.inject.Inject
+import javax.inject.Singleton
 
-
+@Singleton
 class PushNotification @Inject constructor(
-    private val FirebaseFirestore: FirebaseFirestore,
-    @ApplicationContext private val context: Context // Injecting the application context
-
+    private val firebaseFirestore: FirebaseFirestore,
+    @ApplicationContext private val context: Context
 ) {
-
     private val client = OkHttpClient()
-    private lateinit var accessToken: String
+    private var accessToken: String = ""
+    private val coroutineScope = CoroutineScope(Dispatchers.IO)
 
 
 
 
-     fun sendNotificationToAllUsers(productName: String, imageUrl: String) {
-        FirebaseFirestore.collection("user_tokens").get()
-            .addOnSuccessListener { documents ->
-                val tokens = documents.mapNotNull { it.getString("token") }
+    fun sendNotificationToAllUsers(productName: String, imageUrl: String) {
+        coroutineScope.launch {
+            try {
+                val tokens = getTokens()
                 if (tokens.isNotEmpty()) {
                     sendNotification(tokens, productName, imageUrl)
                 }
+            } catch (e: Exception) {
+                Log.e("FCM", "Error getting user tokens: ${e.message}")
             }
-            .addOnFailureListener { exception ->
-                Log.e("FCM", "Error getting user tokens: ${exception.message}")
-            }
+        }
+    }
+
+    private suspend fun getTokens(): List<String> = withContext(Dispatchers.IO) {
+        val snapshot = firebaseFirestore.collection("user_tokens").get().await()
+        snapshot.mapNotNull { it.getString("token") }
     }
 
     init {
-        CoroutineScope(Dispatchers.IO).launch {
+        coroutineScope.launch {
             updateAccessToken()
         }
     }
-
-
-
-    private suspend  fun updateAccessToken() {
-        val stream = context.resources.openRawResource(R.raw.shopping)
-        val credentials = GoogleCredentials.fromStream(stream)
-            .createScoped("https://www.googleapis.com/auth/firebase.messaging")
-        credentials.refresh()
-        accessToken = credentials.accessToken.tokenValue
+    private suspend fun updateAccessToken() {
+        withContext(Dispatchers.IO) {
+            try {
+                val stream = context.resources.openRawResource(R.raw.shopping)
+                val credentials = GoogleCredentials.fromStream(stream)
+                    .createScoped("https://www.googleapis.com/auth/firebase.messaging")
+                credentials.refresh()
+                accessToken = credentials.accessToken.tokenValue
+            } catch (e: Exception) {
+                Log.e("FCM", "Error updating access token: ${e.message}")
+            }
+        }
     }
 
-    private fun sendNotification(tokens: List<String>, productName: String, imageUrl: String) {
-        val json = JSONObject().apply {
-            put("message", JSONObject().apply {
-                put("token", tokens.first()) // Send to first token for simplicity, ideally you'd implement batching for multiple tokens
-                put("notification", JSONObject().apply {
-                    put("title", "New Product Added")
-                    put("body", "Check out our new product: $productName")
-                    put("image", imageUrl)
+    private suspend fun sendNotification(tokens: List<String>, productName: String, imageUrl: String) {
+        tokens.forEach { token ->
+            val json = JSONObject().apply {
+                put("message", JSONObject().apply {
+                    put("token", token)
+                    put("notification", JSONObject().apply {
+                        put("title", "New Product Added")
+                        put("body", "Check out our new product: $productName")
+                        put("image", imageUrl)
+                    })
+                    put("data", JSONObject().apply {
+                        put("product_name", productName)
+                        put("image_url", imageUrl)
+                    })
                 })
-                put("data", JSONObject().apply {
-                    put("product_name", productName)
-                    put("image_url", imageUrl)
-                })
-            })
-        }
+            }
 
         val body = json.toString().toRequestBody("application/json; charset=utf-8".toMediaTypeOrNull())
         val request = Request.Builder()
@@ -87,18 +92,18 @@ class PushNotification @Inject constructor(
             .post(body)
             .build()
 
-        client.newCall(request).enqueue(object : Callback {
-            override fun onFailure(call: Call, e: IOException) {
-                Log.e("FCM", "Notification sending failed: ${e.message}")
+        try {
+            val response = withContext(Dispatchers.IO) {
+                client.newCall(request).execute()
             }
-
-            override fun onResponse(call: Call, response: Response) {
-                if (response.isSuccessful) {
-                    Log.d("FCM", "Notification sent successfully")
-                } else {
-                    Log.e("FCM", "Notification sending failed: ${response.body?.string()}")
-                }
+            if (response.isSuccessful) {
+                Log.d("FCM", "Notification sent successfully")
+            } else {
+                Log.e("FCM", "Notification sending failed: ${response.body?.string()}")
             }
-        })
+        } catch (e: IOException) {
+            Log.e("FCM", "Notification sending failed: ${e.message}")
+        }
     }
+}
 }
