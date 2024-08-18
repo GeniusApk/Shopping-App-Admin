@@ -42,6 +42,24 @@ class ShoppingAppViewModel @Inject constructor(var ShoppingAppRepo: ShoppingAppR
     val addBannerState : MutableState<AddBannerState> = _addBannerState
 
 
+    fun resetCategoryState() {
+        _categoryState.value = CategoryState()
+    }
+
+
+    fun resetUploadCategoryImageState() {
+        _uploadCategoryImageState.value = UploadCategoryImageState()
+    }
+
+    fun resetUploadBannerState() {
+        _upLoadBannerState.value = UploadBannerState()
+    }
+
+
+    fun resetAddBannerState() {
+        _addBannerState.value = AddBannerState()
+    }
+
     fun addBanner(bannerModels: BannerModels){
         viewModelScope.launch {
             ShoppingAppRepo.addBanner(bannerModels).collectLatest {
@@ -71,7 +89,9 @@ class ShoppingAppViewModel @Inject constructor(var ShoppingAppRepo: ShoppingAppR
     }
 
 
-
+    fun resetAddProductState() {
+        _addProductState.value = AddProductState()
+    }
 
     fun uploadBanner(imageUri: Uri){
         viewModelScope.launch {

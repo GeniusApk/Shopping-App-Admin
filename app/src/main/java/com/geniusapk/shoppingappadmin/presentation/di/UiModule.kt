@@ -1,5 +1,6 @@
 package com.geniusapk.shoppingappadmin.presentation.di
 
+import com.geniusapk.shoppingappadmin.data.pushNotifiy.PushNotification
 import com.geniusapk.shoppingappadmin.data.repo.ShoppingAppRepoImpl
 import com.geniusapk.shoppingappadmin.domain.repo.ShoppingAppRepo
 import com.google.firebase.firestore.FirebaseFirestore
@@ -14,8 +15,7 @@ import dagger.hilt.android.components.ViewModelComponent
 @InstallIn(ViewModelComponent::class)
 object UiModule {
     @Provides
-    fun provideRepo(firestore: FirebaseFirestore , firebaseStorage: FirebaseStorage): ShoppingAppRepo {
-        return ShoppingAppRepoImpl(firestore , firebaseStorage)
-
+    fun provideRepo(firestore: FirebaseFirestore , firebaseStorage: FirebaseStorage  , pushNotification: PushNotification): ShoppingAppRepo {
+        return ShoppingAppRepoImpl(firestore , firebaseStorage  , pushNotification )
     }
 }

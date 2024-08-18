@@ -129,10 +129,13 @@ fun CategoryScreen(
             categoryImageUri = null
             categoryImage = ""
 
+            viewModel.resetCategoryState()
 
         }
         uploadImageState.success.isNotBlank() -> {
             categoryImage = uploadImageState.success
+
+            viewModel.resetUploadCategoryImageState()
         }
     }
 
@@ -153,11 +156,13 @@ fun CategoryScreen(
         }
         addBannerState.success.isNotBlank() -> {
             Toast.makeText(context, addBannerState.success, Toast.LENGTH_SHORT).show()
-            bannerImageUri = null
-            bannerImage = ""
+
+            viewModel.resetAddBannerState()
+
         }
         uploadbannerImageState.success.isNotBlank() -> {
             bannerImage = uploadbannerImageState.success
+            viewModel.resetUploadBannerState()
         }
 
     }
@@ -344,6 +349,12 @@ fun CategoryScreen(
 
             )
             viewModel.addBanner(banner)
+            bannerName = ""
+            bannerImageUri = null
+            bannerImage = ""
+
+
+
 
         }) {
             Text(text = "Add Banner")
